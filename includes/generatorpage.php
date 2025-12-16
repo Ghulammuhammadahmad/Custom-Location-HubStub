@@ -405,14 +405,6 @@ function clhs_handle_generate_pages() {
         return new WP_Error('clhs_acf_field_not_found', 'ACF Group not found: ');
     }
 
-    // $group_title = ($page_options === 'hub') ? 'Hub Custom Fields' : 'Stub Custom Fields';
-
-    // $field_group = acf_get_field_group($group_title);
-
-    // $field_group_key = $field_group['key'];
-
-    // $acf_schema = clhs_acf_schema_from_group($field_group_key);
-
     // Output JSON Schema for debugging
     echo "ACF Schema:<br>";
     echo json_encode($acf_schema, JSON_PRETTY_PRINT);
