@@ -390,11 +390,10 @@ function clhs_handle_generate_pages() {
     $page_names = get_option('clhs_page_name', '');
     $page_options = get_option('clhs_page_option', '');
 
-    if ($page_options == 'hub') {
-        $field_group_key = "group_69413c369e666";  // your Hub group key
-    } else {
-        $field_group_key = "group_stub_custom_fields"; // your Stub group key
-    }
+    $group_title = ($page_options === 'hub') ? 'Hub Custom Fields' : 'Stub Custom Fields';
+
+    $field_group = acf_get_field_group($group_title);
+    $field_group_key = $field_group['key'];
 
     $acf_schema = clhs_acf_schema_from_group($field_group_key);
 
