@@ -107,12 +107,65 @@ function clhs_acf_schema_from_group($field_group_key) {
                 "description" => $field_label
             ];
 
-            // if it's a checkbox => define items as string
+            // If it's a checkbox, define items as string array
             if ($field_type === 'checkbox') {
                 $schema_item["items"] = [
                     "type" => "string"
                 ];
             }
+
+            // ----------- PATCH FOR OPENAI: Ensure required/include in arr.item object -----------
+            // If it's an array field, it MUST have items and any object "items" must have "required" and "additionalProperties": false
+            if ($json_type === 'array' && empty($schema_item['items'])) {
+
+                // If it's a repeater and has sub_fields, describe items as an object
+                if ($field_type === 'repeater' && !empty($field['sub_fields']) && is_array($field['sub_fields'])) {
+
+                    $item_props = [];
+                    foreach ($field['sub_fields'] as $sub) {
+                        $sub_type = $sub['type'];
+                        $sub_json_type = "string";
+
+                        switch ($sub_type) {
+                            case 'number':     $sub_json_type = "number"; break;
+                            case 'true_false': $sub_json_type = "boolean"; break;
+                            case 'checkbox':   $sub_json_type = "array"; break;
+                            default:           $sub_json_type = "string"; break;
+                        }
+
+                        $sub_schema = [
+                            "type" => $sub_json_type,
+                            "description" => $sub['label'] ?? $sub['name']
+                        ];
+
+                        if ($sub_type === 'checkbox') {
+                            $sub_schema["items"] = ["type" => "string"];
+                        }
+                        if ($sub_json_type === 'array' && empty($sub_schema["items"])) {
+                            $sub_schema["items"] = ["type" => "string"];
+                        }
+
+                        $item_props[$sub['name']] = $sub_schema;
+                    }
+
+                    // NEW: required - mark all properties as required
+                    $required_keys = array_keys($item_props);
+
+                    $schema_item["items"] = [
+                        "type" => "object",
+                        "properties" => $item_props,
+                        "required" => $required_keys,
+                        "additionalProperties" => false,
+                    ];
+
+                } else {
+                    // Non-repeater arrays (or no sub_fields): default to array of strings
+                    // But if you ever know that items are objects (custom), you can instead build accordingly
+                    $schema_item["items"] = ["type" => "string"];
+                }
+
+            }
+            // --------- END PATCH ---------
 
             $acf_schema['properties'][$field_slug] = $schema_item;
 
