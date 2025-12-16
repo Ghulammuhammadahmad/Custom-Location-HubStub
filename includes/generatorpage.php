@@ -144,9 +144,19 @@ function get_json_from_openai($acf_schema, $user_input = null) {
     // --- Make the schema "strict": require all properties and disallow extra keys.
     $schema = $acf_schema;
 
+    // Add meta_title and meta_description at the end of the schema
+    $schema['properties']['meta_title'] = [
+        "type" => "string",
+        "description" => "Meta Title for SEO"
+    ];
+    $schema['properties']['meta_description'] = [
+        "type" => "string",
+        "description" => "Meta Description for SEO"
+    ];
+
     if (isset($schema['properties']) && is_array($schema['properties'])) {
         $all_keys = array_keys($schema['properties']);
-        $schema['required'] = $all_keys; // require all
+        $schema['required'] = $all_keys; // require all, including meta_title/meta_description
     } else {
         return new WP_Error('openai_bad_schema', 'Schema must contain a "properties" object.');
     }
@@ -189,7 +199,8 @@ function get_json_from_openai($acf_schema, $user_input = null) {
         ],
         "store" => true,
     ];
-
+// echo $payload;
+// flush();
     $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -343,6 +354,14 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
         return new WP_Error('clhs_acf_missing', 'ACF update_field() not available.');
     }
 
+    // 4) Add meta_title and meta_description to Rank Math SEO meta if present in AI JSON result
+    if (!empty($aijsonresult['meta_title'])) {
+        update_post_meta($page_id, 'rank_math_title', $aijsonresult['meta_title']);
+    }
+    if (!empty($aijsonresult['meta_description'])) {
+        update_post_meta($page_id, 'rank_math_description', $aijsonresult['meta_description']);
+    }
+
     // Return the permalink (URL) of the generated or updated page
     $page_url = get_permalink($page_id);
     if (!$page_url) {
@@ -407,7 +426,7 @@ function clhs_handle_generate_pages() {
             flush();
             
             $aijsonresult = get_json_from_openai($acf_schema, $user_input);
-            echo json_encode($aijsonresult, JSON_PRETTY_PRINT);
+            echo "AI Response: ".json_encode($aijsonresult, JSON_PRETTY_PRINT);
             echo "<br>---<br>";
             flush();
 
