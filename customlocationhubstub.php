@@ -1,6 +1,6 @@
 <?php
 
-/*
+/* 
 Plugin Name: Custom Location Hub Stub
 Description: A stub for the Custom Location Hub plugin.
 Version: 1.0.0
