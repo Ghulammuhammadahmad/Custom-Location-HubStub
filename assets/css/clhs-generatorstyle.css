@@ -1,0 +1,8 @@
+#clhs-generate-pages-result{
+    background-color: #000;
+    color: #fff;
+    min-height: 100px;
+    margin-top:20px;
+    padding: 20px;
+    font-family: 'courier new', monospace;
+}
