@@ -125,7 +125,7 @@ function clhs_acf_schema_from_group($field_group_key) {
     return $acf_schema;
 }
 
-function get_json_from_openai($acf_schema, $user_input = null) {
+function get_json_from_openai($acf_schema, $user_input = null, $extra_instructions = '') {
     $api_key    = get_option('clhs_openai_api_key', '');
     $model_name = get_option('clhs_openai_model', '');
     $prompt     = get_option('clhs_ai_prompt', '');
@@ -168,6 +168,12 @@ function get_json_from_openai($acf_schema, $user_input = null) {
 
     // Use "instructions" for system/developer guidance (recommended for Responses API)
     $instructions = trim($prompt);
+
+    // Add extra_instructions if provided
+    if (!empty($extra_instructions)) {
+        $instructions = ($instructions ? $instructions . " " : "") . $extra_instructions;
+    }
+
     if ($instructions === '') {
         $instructions = 'Generate a JSON object that matches the provided schema.';
     }
@@ -427,12 +433,30 @@ function clhs_handle_generate_pages() {
                 continue;
             }
 
+            // ----- Customization: for stub, append parent page info to instructions -----
+            $extra_instructions = '';
+
+            if ($page_options === 'stub') {
+                $parent_page_id = (int) get_option('clhs_parent_page_id', 0);
+                $parent_page_title = '';
+                if ($parent_page_id > 0) {
+                    $parent_page = get_post($parent_page_id);
+                    if ($parent_page && !is_wp_error($parent_page)) {
+                        $parent_page_title = $parent_page->post_title;
+                    }
+                }
+                if (!empty($parent_page_title)) {
+                    $extra_instructions = 'The parent page is "' . $parent_page_title . '". Use this for context when creating the content.';
+                }
+            }
+            // --------------------------------------------------------------------------
+
             // Add user prompt/context with the current page name
             $user_input = 'Generate content for these fields. Page name: "' . $page_name . '"';
             echo "Generating for: {$page_name}<br>";
             flush();
             
-            $aijsonresult = get_json_from_openai($acf_schema, $user_input);
+            $aijsonresult = get_json_from_openai($acf_schema, $user_input, $extra_instructions);
             echo "AI Response: ".json_encode($aijsonresult, JSON_PRETTY_PRINT);
             echo "<br>---<br>";
             flush();
