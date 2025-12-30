@@ -264,20 +264,15 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
                 "name"   => "stub",
                 "strict" => true,
                 "schema" => $schema,
-            ],
-            "verbosity" => "medium",
+            ]
         ],
         "reasoning" => [
             "effort"  => "medium",
             "summary" => "auto",
         ],
-        "store" => true,
-        "include" => [
-            "reasoning.encrypted_content",
-            "web_search_call.action.sources"
-        ]
-    ];
-// print_r($payload);
+        "store" => false
+      ];
+print_r($payload);
 echo "<br>Generating Content......";
 // flush();
     $ch = curl_init('https://api.openai.com/v1/responses');
