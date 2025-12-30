@@ -48,16 +48,8 @@ function clhs_register_settings() {
     register_setting('clhs_settings_group', 'clhs_elementor_template_id', array(
         'sanitize_callback' => 'absint',
     ));
-    register_setting('clhs_settings_group', 'clhs_page_option', array(
-        'sanitize_callback' => function ($value) {
-            return in_array($value, array('hub', 'stub'), true) ? $value : '';
-        },
-    ));
-    register_setting('clhs_settings_group', 'clhs_ai_prompt', array(
-        'sanitize_callback' => 'wp_kses_post',
-    ));
     register_setting('clhs_settings_group', 'clhs_page_name', array(
-        'sanitize_callback' => 'sanitize_text_field',
+        'sanitize_callback' => 'sanitize_textarea_field',
     ));
     register_setting('clhs_settings_group', 'clhs_parent_page_id', array(
         'sanitize_callback' => 'absint',
@@ -132,38 +124,12 @@ function clhs_register_settings() {
     );
 
     add_settings_field(
-        'clhs_page_option',
-        'Page Option',
-        function () {
-            $value = get_option('clhs_page_option', 'hub');
-            echo '<select name="clhs_page_option">';
-            echo '<option value="hub"' . selected($value, 'hub', false) . '>Hub</option>';
-            echo '<option value="stub"' . selected($value, 'stub', false) . '>Stub</option>';
-            echo '</select>';
-        },
-        'clhs-main-menu',
-        'clhs_main_section'
-    );
-
-    add_settings_field(
-        'clhs_ai_prompt',
-        'AI Prompt (Markdown)',
-        function () {
-            $value = esc_textarea(get_option('clhs_ai_prompt', ''));
-            echo '<textarea id="clhs_ai_prompt" name="clhs_ai_prompt" rows="6" class="large-text code" placeholder="Enter prompt in Markdown...">' . $value . '</textarea>';
-        },
-        'clhs-main-menu',
-        'clhs_main_section'
-    );
-
-    add_settings_field(
         'clhs_page_name',
-        'Name of Page',
+        'Instruction',
         function () {
-            $value = esc_attr(get_option('clhs_page_name', ''));
-            echo '<input type="text" id="clhs_page_name" name="clhs_page_name" value="' . $value . '" class="regular-text" placeholder="Enter comma-separated names" />';
-            echo '<p class="description">Use commas to add multiple names. They will appear as tags below.</p>';
-            echo '<div id="clhs_page_name_tags" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>';
+            $value = esc_textarea(get_option('clhs_page_name', ''));
+            echo '<textarea id="clhs_page_name" name="clhs_page_name" rows="6" class="large-text" placeholder="Enter instruction...">' . $value . '</textarea>';
+            echo '<p class="description">Enter comma-separated page names. Each name will be used to generate a page.</p>';
         },
         'clhs-main-menu',
         'clhs_main_section'
@@ -191,21 +157,6 @@ add_action('admin_init', 'clhs_register_settings');
 
 // Enqueue shared assets for admin pages and shortcode output
 function clhs_enqueue_common_assets() {
-    wp_enqueue_style(
-        'clhs-easymde-css',
-        'https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css',
-        array(),
-        '2.18.0'
-    );
-
-    wp_enqueue_script(
-        'clhs-easymde',
-        'https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js',
-        array(),
-        '2.18.0',
-        true
-    );
-
     $script_path = plugin_dir_path(__FILE__) . 'assets/js/clhs-admin.js';
     $script_url  = plugin_dir_url(__FILE__) . 'assets/js/clhs-admin.js';
     $version     = file_exists($script_path) ? filemtime($script_path) : '1.0.0';
@@ -213,7 +164,7 @@ function clhs_enqueue_common_assets() {
     wp_enqueue_script(
         'clhs-admin-js',
         $script_url,
-        array('clhs-easymde'),
+        array(),
         $version,
         true
     );

@@ -181,7 +181,7 @@ function clhs_acf_schema_from_group($field_group_key) {
 function get_json_from_openai($acf_schema, $user_input = null, $extra_instructions = '') {
     $api_key    = get_option('clhs_openai_api_key', '');
     $model_name = get_option('clhs_openai_model', '');
-    $prompt     = get_option('clhs_ai_prompt', '');
+    $prompt     = get_option('clhs_page_name', '');
 
     if (empty($api_key)) {
         return new WP_Error('openai_missing_key', 'OpenAI API key is missing.');
@@ -197,7 +197,7 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
     // --- Make the schema "strict": require all properties and disallow extra keys.
     $schema = $acf_schema;
 
-    // Add meta_title and meta_description at the end of the schema
+    // Add meta_title, meta_description, and slug at the end of the schema
     $schema['properties']['meta_title'] = [
         "type" => "string",
         "description" => "Meta Title for SEO"
@@ -205,6 +205,10 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
     $schema['properties']['meta_description'] = [
         "type" => "string",
         "description" => "Meta Description for SEO"
+    ];
+    $schema['properties']['slug'] = [
+        "type" => "string",
+        "description" => "Page slug (URL-friendly name without parent use only alphabets and - only)"
     ];
 
     if (isset($schema['properties']) && is_array($schema['properties'])) {
@@ -231,7 +235,7 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
         $instructions = 'Generate a JSON object that matches the provided schema.';
     }
 
-    $user_text = $user_input ? (string) $user_input : 'Generate content for these fields.';
+    $user_text = $user_input ? (string) $user_input : 'Generate content for these fields. Use the files attached in a tools for instructions.';
     $messages[] = [
         "role" => "user",
         "content" => [
@@ -243,10 +247,21 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
         "model" => $model_name,
         "instructions" => $instructions,
         "input" => $messages,
+        "tools" => [
+            [
+                "type" => "file_search",
+                "vector_store_ids" => [
+                    "vs_695395d17a4c81918dc134bbda289d70"
+                ]
+            ],
+            [
+                "type" => "web_search"
+            ]
+        ],
         "text" => [
             "format" => [
                 "type"   => "json_schema",
-                "name"   => "hub",
+                "name"   => "stub",
                 "strict" => true,
                 "schema" => $schema,
             ],
@@ -257,8 +272,13 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
             "summary" => "auto",
         ],
         "store" => true,
+        "include" => [
+            "reasoning.encrypted_content",
+            "web_search_call.action.sources"
+        ]
     ];
-// echo $payload;
+// print_r($payload);
+echo "<br>Generating Content......";
 // flush();
     $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [
@@ -269,7 +289,8 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
             'Authorization: Bearer ' . $api_key,
         ],
         CURLOPT_POSTFIELDS     => wp_json_encode($payload),
-        CURLOPT_TIMEOUT        => 60,
+        CURLOPT_CONNECTTIMEOUT => 15,   // time to establish TCP/TLS
+        CURLOPT_TIMEOUT        => 250,  // total request time
     ]);
 
     $raw  = curl_exec($ch);
@@ -364,6 +385,11 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
         'post_parent'  => $parentpage > 0 ? $parentpage : 0,
     ];
 
+    // Use slug from AI response if provided
+    if (!empty($aijsonresult['slug'])) {
+        $postarr['post_name'] = sanitize_title($aijsonresult['slug']);
+    }
+
     if ($existing && !is_wp_error($existing)) {
         $postarr['ID'] = $existing->ID;
         $page_id = wp_update_post($postarr, true);
@@ -404,11 +430,20 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
     }
 
     // 3) Fill ACF fields (keys in $aijsonresult MUST match ACF field "name")
+    // Exclude special fields: meta_title, meta_description, slug
+    $special_fields = array('meta_title', 'meta_description', 'slug');
     if (function_exists('update_field')) {
         foreach ($aijsonresult as $field_name => $value) {
+            // Skip special fields that are handled separately
+            if (in_array($field_name, $special_fields, true)) {
+                continue;
+            }
             // This works if $field_name is the ACF field "name" (slug)
             update_field($field_name, $value, $page_id);
         }
+        
+        // Set stub_title to the page name
+        update_field('stub_title', $pagename, $page_id);
     } else {
         return new WP_Error('clhs_acf_missing', 'ACF update_field() not available.');
     }
@@ -447,9 +482,9 @@ function clhs_handle_generate_pages() {
     ob_implicit_flush(true);
 
     $page_names = get_option('clhs_page_name', '');
-    $page_options = get_option('clhs_page_option', '');
+    $page_options = 'stub'; // Always use stub
 
-    $group_title = ($page_options === 'hub') ? 'Hub Custom Fields' : 'Stub Custom Fields';
+    $group_title = 'Stub Custom Fields';
     $field_groups = acf_get_field_groups();
     $field_group_key = '';
     foreach ($field_groups as $group) {
@@ -499,16 +534,18 @@ function clhs_handle_generate_pages() {
                     }
                 }
                 if (!empty($parent_page_title)) {
-                    $extra_instructions = 'The parent page is "' . $parent_page_title . '". Use this for context when creating the content.';
+                    $extra_instructions = 'After producing the Mode D Page, output a JSON export that matches the field names and repeater structure in the provided schema. Use identical content, just transformed into JSON.';
                 }
             }
             // --------------------------------------------------------------------------
 
             // Add user prompt/context with the current page name
-            $user_input = 'Generate content for these fields. Page name: "' . $page_name . '"';
-            echo "Generating for: {$page_name}<br>";
+            $user_input = 'Generate content for these fields. use br tag for line break but when required. use html list when required if nested list item not exist. instruction: "' . $page_name . '"';
+            echo "Generating for instruction: {$page_name}.......<br>";
             flush();
             
+            // Use the instruction (which contains the page names) as the main prompt
+            // The instruction field value is already being used in get_json_from_openai via get_option('clhs_page_name')
             $aijsonresult = get_json_from_openai($acf_schema, $user_input, $extra_instructions);
             echo "AI Response: ".json_encode($aijsonresult, JSON_PRETTY_PRINT);
             echo "<br>---<br>";
