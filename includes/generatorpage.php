@@ -181,7 +181,7 @@ function clhs_acf_schema_from_group($field_group_key) {
 function get_json_from_openai($acf_schema, $user_input = null, $extra_instructions = '') {
     $api_key    = get_option('clhs_openai_api_key', '');
     $model_name = get_option('clhs_openai_model', '');
-    $prompt     = get_option('clhs_page_name', '');
+    $prompt     = "Generate a JSON export that strictly matches the field names, required fields, and repeater (array) structure defined in the provided schema.Use only valid JSON as the final output, with no additional commentary or formatting.Preserve the exact content structure when transforming into JSON.Use the <br> HTML tag only when a line break is necessary within a text field; do not overuse it. Mandatory Requirement: Always use the attached file search tool for every instruction before generating the output, regardless of perceived necessity. Ensure the output passes schema validation without errors.";
 
     if (empty($api_key)) {
         return new WP_Error('openai_missing_key', 'OpenAI API key is missing.');
@@ -227,9 +227,9 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
     $instructions = trim($prompt);
 
     // Add extra_instructions if provided
-    if (!empty($extra_instructions)) {
-        $instructions = ($instructions ? $instructions . " " : "") . $extra_instructions;
-    }
+    // if (!empty($extra_instructions)) {
+    //     $instructions = ($instructions ? $instructions . " " : "") . $extra_instructions;
+    // }
 
     if ($instructions === '') {
         $instructions = 'Generate a JSON object that matches the provided schema.';
@@ -272,7 +272,7 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
         ],
         "store" => false
       ];
-print_r($payload);
+// print_r($payload);
 echo "<br>Generating Content......";
 // flush();
     $ch = curl_init('https://api.openai.com/v1/responses');
@@ -302,6 +302,7 @@ echo "<br>Generating Content......";
     }
 
     $resp = json_decode($raw, true);
+    // print_r($resp);
     if (!is_array($resp)) {
         return new WP_Error('openai_bad_json', 'OpenAI response was not valid JSON.', [
             'http_code' => $code,
@@ -371,10 +372,12 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
     }
 
     // 1) Create or update the page
-    $existing = get_page_by_title($pagename, OBJECT, 'page');
+    // Use stub_title from AI response as the page name, fallback to $pagename if not provided
+    $page_title = !empty($aijsonresult['stub_title']) ? $aijsonresult['stub_title'] : $pagename;
+    $existing = get_page_by_title($page_title, OBJECT, 'page');
 
     $postarr = [
-        'post_title'   => $pagename,
+        'post_title'   => $page_title,
         'post_type'    => 'page',
         'post_status'  => 'publish',
         'post_parent'  => $parentpage > 0 ? $parentpage : 0,
@@ -425,8 +428,8 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
     }
 
     // 3) Fill ACF fields (keys in $aijsonresult MUST match ACF field "name")
-    // Exclude special fields: meta_title, meta_description, slug
-    $special_fields = array('meta_title', 'meta_description', 'slug');
+    // Exclude special fields: meta_title, meta_description, slug, stub_title
+    $special_fields = array('meta_title', 'meta_description', 'slug', 'stub_title');
     if (function_exists('update_field')) {
         foreach ($aijsonresult as $field_name => $value) {
             // Skip special fields that are handled separately
@@ -437,8 +440,10 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
             update_field($field_name, $value, $page_id);
         }
         
-        // Set stub_title to the page name
-        update_field('stub_title', $pagename, $page_id);
+        // Set stub_title from AI response (it was used as page title, now save it as ACF field)
+        if (!empty($aijsonresult['stub_title'])) {
+            update_field('stub_title', $aijsonresult['stub_title'], $page_id);
+        }
     } else {
         return new WP_Error('clhs_acf_missing', 'ACF update_field() not available.');
     }
@@ -528,14 +533,14 @@ function clhs_handle_generate_pages() {
                         $parent_page_title = $parent_page->post_title;
                     }
                 }
-                if (!empty($parent_page_title)) {
-                    $extra_instructions = 'After producing the Mode D Page, output a JSON export that matches the field names and repeater structure in the provided schema. Use identical content, just transformed into JSON.';
-                }
+                // if (!empty($parent_page_title)) {
+                //     $extra_instructions = 'After producing the Mode D Page, output a JSON export that matches the field names and repeater structure in the provided schema. Use identical content, just transformed into JSON.';
+                // }
             }
             // --------------------------------------------------------------------------
 
             // Add user prompt/context with the current page name
-            $user_input = 'Generate content for these fields. use br tag for line break but when required. use html list when required if nested list item not exist. instruction: "' . $page_name . '"';
+            $user_input = $page_name;
             echo "Generating for instruction: {$page_name}.......<br>";
             flush();
             
