@@ -176,6 +176,22 @@ function clhb_location_cards_shortcode($atts)
         .clhb-location-card-maplink a {
             color: #fff;
         }
+        @media (max-width:1024px){
+    .clhb-location-card{
+        width:48%;
+        padding: 1rem !important;
+    }
+    .clhb-location-card-address{
+        font-size:1.6rem;
+        margin-bottom:0;
+    }
+}
+@media (max-width:767px){
+    .clhb-location-card{
+        width:100%;
+        padding: 1.6rem !important;
+    }
+}
     </style>
     <?php
 
