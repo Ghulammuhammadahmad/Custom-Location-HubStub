@@ -3,7 +3,7 @@
 /* 
 Plugin Name: Custom Location Hub Stub
 Description: A stub for the Custom Location Hub plugin.
-Version: 1.0.1
+Version: 1.0.12
 Author: Ghulam Ahmad
 Author URI: https://genxintegratedsystems.com
 */
@@ -200,3 +200,4 @@ function clhs_admin_page_content() {
 }
 
 require_once plugin_dir_path(__FILE__) . 'includes/generatorpage.php';
+require_once plugin_dir_path(__FILE__) . 'includes/clhb_shortcodes.php';

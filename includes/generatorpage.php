@@ -208,7 +208,7 @@ function get_json_from_openai($acf_schema, $user_input = null, $extra_instructio
     ];
     $schema['properties']['slug'] = [
         "type" => "string",
-        "description" => "Page slug (URL-friendly name without parent use only alphabets and - only)"
+        "description" => "Page slug"
     ];
 
     if (isset($schema['properties']) && is_array($schema['properties'])) {
@@ -385,7 +385,13 @@ function generate_pagefrom_openairesponse($aijsonresult, $pagename) {
 
     // Use slug from AI response if provided
     if (!empty($aijsonresult['slug'])) {
-        $postarr['post_name'] = sanitize_title($aijsonresult['slug']);
+        $slug = $aijsonresult['slug'];
+        // If slug contains a slash, use only the part after the last slash
+        if (strpos($slug, '/') !== false) {
+            $parts = explode('/', $slug);
+            $slug = end($parts);
+        }
+        $postarr['post_name'] = sanitize_title($slug);
     }
 
     if ($existing && !is_wp_error($existing)) {
