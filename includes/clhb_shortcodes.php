@@ -67,7 +67,7 @@ function clhb_location_cards_shortcode($atts)
     if (empty($post))
         return '';
 
-    $repeater = get_field('stub_closest_clinics', $post->ID);
+    $repeater = get_field('stub_nearby_clinics', $post->ID);
     if (empty($repeater) || !is_array($repeater)) {
         return '';
     }
@@ -88,8 +88,8 @@ function clhb_location_cards_shortcode($atts)
             // Try all common variants for the link label
             $label = '';
             // If in JSON no location_link_label but in ACF repeater there is, use that
-            if (!empty($row['location_link_label'])) {
-                $label = $row['location_link_label'];
+            if (!empty($row['map_link_label'])) {
+                $label = $row['map_link_label'];
             } elseif (!empty($row['clinicheading']) && preg_match('/\[LINK_[A-Z_]+_MAP\]/', $row['clinicheading'], $m)) {
                 $label = $m[0];
             } elseif (!empty($row['clinicdetails']) && preg_match('/\[LINK_[A-Z_]+_MAP\]/', $row['clinicdetails'], $m)) {
