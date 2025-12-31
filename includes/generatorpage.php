@@ -44,6 +44,36 @@ function clhs_generatorpage_shortcode() {
 }
 add_shortcode('clhs-generatorpage', 'clhs_generatorpage_shortcode');
 
+// Key for static links: update these as needed
+function clhs_replace_link_labels_recursive($data) {
+    $link_map = array(
+        "[LINK_ALL_LOCATIONS]"   => "/locations/",
+        "[LINK_AREAS_WE_SERVE]"  => "/area-we-serve/",
+        "[LINK_APPOINTMENT_FORM]"=> "#contactform",
+        "[LINK_DIRECTIONS_PAGE]" => "/locations/",
+        "[LINK_REVIEWS_PAGE]"    => "/testimonials/",
+        "[LINK_TEAM_PAGE]"       => "/team/",
+        "[LINK_RESEARCH_CENTER]" => "<a href='/research/'> Research Center </a>",
+    );
+
+    if (is_array($data)) {
+        $result = array();
+        foreach ($data as $key => $value) {
+            $result[$key] = clhs_replace_link_labels_recursive($value);
+        }
+        return $result;
+    } elseif (is_string($data)) {
+        // Replace all [LINK_...] patterns that are in the map
+        $out = $data;
+        foreach ($link_map as $label => $url) {
+            $out = str_replace($label, $url, $out);
+        }
+        return $out;
+    } else {
+        return $data;
+    }
+}
+
 
 // AJAX handler for generating pages
 function clhs_acf_schema_from_group($field_group_key) {
@@ -357,6 +387,9 @@ echo "<br>Generating Content......";
         ]);
     }
 
+    // Replace LINK labels with URLs recursively in all values
+    $json_obj = clhs_replace_link_labels_recursive($json_obj);
+
     return $json_obj;
 }
 
@@ -539,9 +572,6 @@ function clhs_handle_generate_pages() {
                         $parent_page_title = $parent_page->post_title;
                     }
                 }
-                // if (!empty($parent_page_title)) {
-                //     $extra_instructions = 'After producing the Mode D Page, output a JSON export that matches the field names and repeater structure in the provided schema. Use identical content, just transformed into JSON.';
-                // }
             }
             // --------------------------------------------------------------------------
 
