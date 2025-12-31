@@ -108,7 +108,7 @@ function clhb_location_cards_shortcode($atts)
                             loading="lazy">
                     </div>
                 <?php endif; ?>
-                <div class="clhb-location-card-title"><strong><?php echo esc_html($loc['title']); ?></strong></div>
+                <div class="clhb-location-card-title"><h3><?php echo esc_html($loc['title']); ?></h3></div>
                 <div class="clhb-location-card-address">
                     <?php echo esc_html($loc['address']); ?><br>
                     Phone: <a href="tel:2144417962">214-441-7962</a>
@@ -124,6 +124,9 @@ function clhb_location_cards_shortcode($atts)
         <?php endforeach; ?>
     </div>
     <style>
+		.clhb-location-card-title h3{
+			font-weight:600 !important;
+		}
         .clhb-location-cards {
             display: flex;
             gap: 20px;
@@ -176,7 +179,7 @@ function clhb_location_cards_shortcode($atts)
         .clhb-location-card-maplink a {
             color: #fff;
         }
-        @media (max-width:1024px){
+		@media (max-width:1024px){
     .clhb-location-card{
         width:48%;
         padding: 1rem !important;
