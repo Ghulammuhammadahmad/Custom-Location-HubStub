@@ -13,49 +13,49 @@ function clhb_location_cards_shortcode($atts)
             "title": "Comprehensive Spine Center of Dallas – Farmers Branch Clinic",
             "address": "2655 Villa Creek Dr Ste. SW105, Farmers Branch, TX 75234, United States",
             "map_link_label": "[LINK_FARMERS_BRANCH_MAP]",
-            "map_link": "https://maps.app.goo.gl/g6RRrMF5WE3RHe3A7",
+            "map_link": "/locations/farmers-branch-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/farmerbranch-clinic-loc-photo.webp"
         },
         {
             "title": "Comprehensive Spine Center of Dallas – Fort Worth Clinic",
             "address": "1000 9th Ave suite a, Fort Worth, TX 76104, United States",
             "map_link_label": "[LINK_FORT_WORTH_MAP]",
-            "map_link": "https://maps.app.goo.gl/6XHnDGf8fvPZrA6aA",
+            "map_link": "/locations/fort-worth-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/fort-worth-clinic-loc-photo.webp"
         },
         {
             "title": "Comprehensive Spine Center of Dallas – Allen Clinic",
             "address": "1101 Raintree Cir STE 200, Allen, TX 75013, United States",
             "map_link_label": "[LINK_ALLEN_MAP]",
-            "map_link": "https://maps.app.goo.gl/rtvNwCaw9cbRipn28",
+            "map_link": "/locations/allen-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/allen-clinic-loc-photo.webp"
         },
         {
             "title": "Comprehensive Spine Center of Dallas – Arlington Clinic",
             "address": "2261 Brookhollow Plaza Dr #111, Arlington, TX 76006, United States",
             "map_link_label": "[LINK_ARLINGTON_MAP]",
-            "map_link": "https://maps.app.goo.gl/E1NaPi3rcBftbRSf9",
+            "map_link": "/locations/arlington-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/arlington-clinic-loc-photo.webp"
         },
         {
             "title": "Comprehensive Spine Center of Dallas – Frisco Clinic",
             "address": "4577 Ohio Dr suite 140, Frisco, TX 75035, United States",
             "map_link_label": "[LINK_FRISCO_MAP]",
-            "map_link": "https://maps.app.goo.gl/eM7NUPQkRYf9KWdF6",
+            "map_link": "/locations/frisco-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/frisco-clinic-loc-photo.webp"
         },
         {
             "title": "Comprehensive Spine Center of Dallas – Lancaster Clinic",
             "address": "2700 W Pleasant Run Rd Ste 200, Lancaster, TX 75146, United States",
             "map_link_label": "[LINK_LANCASTER_MAP]",
-            "map_link": "https://maps.app.goo.gl/RgQsqfarbu4ZgmUe9",
+            "map_link": "/locations/lancaster-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/lancaster-clinic-loc-photo.webp"
         },
         {
             "title": "Comprehensive Spine Center of Dallas – Mesquite Clinic",
             "address": "18601 Lyndon B Johnson Fwy #618, Mesquite, TX 75150, United States",
             "map_link_label": "[LINK_MESQUITE_MAP]",
-            "map_link": "https://maps.app.goo.gl/MGP6DSPHLRzetUwB7",
+            "map_link": "/locations/mesquite-clinic/",
             "image": "https://dallasspine.com/wp-content/uploads/2025/12/mesquite-clinic-loc-photo.webp"
         }
     ]';
@@ -117,7 +117,7 @@ function clhb_location_cards_shortcode($atts)
                 </div>
                 <div class="clhb-location-card-maplink">
                     <a href="<?php echo esc_url($loc['map_link']); ?>" target="_blank" rel="noopener">
-                        View on Map
+                        View Location
                     </a>
                 </div>
             </div>
